@@ -29,10 +29,13 @@ async def aggregate_function(file: UploadFile = File(...)):
         if "add" in json_data:
             if json_data["add"] == "youtube":
                 process_youtube(url = json_data["data"], scope=json_data['scope'])
+                #trả về add thành công
             elif json_data["add"] == "pdf":
                 process_pdf(pdf_data=json_data["data"],scope=json_data["scope"])
+                #trả về add thành công
             else:
-                #raise error : không hợp lệ 
+                #raise error : không hợp lệ
+                # trả về erro và json error 
                 pass
         elif "search" in json_data:
             mod = json_data.get("mod","word")
