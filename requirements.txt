@@ -4,3 +4,4 @@ fastapi
 uvicorn
 chromadb
 sentence_transformers
+fitz
