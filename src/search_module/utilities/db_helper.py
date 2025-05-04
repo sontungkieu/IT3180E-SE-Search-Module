@@ -15,6 +15,14 @@ class LocalEmbeddingFunction:
     def __call__(self, input: List[str]) -> List[List[float]]:
         return self.model.encode(input).tolist()
 
+# class LocalEmbeddingFunction:
+#     """Custom embedding function dùng mô hình local (offline) với ONNX."""
+#     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+#         self.model = SentenceTransformer(model_name, backend="onnx")
+
+#     def __call__(self, input: List[str]) -> List[List[float]]:
+#         return self.model.encode(input).tolist()
+
 
 class VectorDatabase:
     """Vector DB cho dữ liệu chunk hóa, dùng Chroma + offline embedding."""
@@ -37,11 +45,13 @@ class VectorDatabase:
     def add_chunk(self, chunk: Dict[str, Any]) -> Dict[str, Any]:
         """Thêm 1 chunk vào collection tương ứng."""
         try:
-            scope = chunk["scope"]
+            scope = chunk["chunk_scope"]
             collection = self.get_collection_by_scope(scope)
-
+            print("collection name:", collection.name)
+            print("chunk:", chunk)
             chunk_text = chunk.get("text", "")
             if not chunk_text.strip():
+                print("errooorrr: Empty text.")
                 return {"status": "error", "message": "Empty text."}
 
             chunk_id = f"{scope}_{chunk.get('chunk_id')}_{hash(chunk_text)}"
@@ -53,16 +63,17 @@ class VectorDatabase:
                 "chunk_source_type": chunk.get("chunk_source_type"),
                 "chunk_id": chunk.get("chunk_id"),
             }
-
+            print("chunk_metadata:", chunk_metadata)
             collection.add(
                 documents=[chunk_text],
                 metadatas=[chunk_metadata],
                 ids=[chunk_id]
             )
-
+            print("add chunk_id ok:", chunk_id)
             return {"status": "success", "chunk_id": chunk_id}
 
         except Exception as e:
+            print("Error adding chunk:", e)
             return {"status": "error", "message": str(e)}
 
     def semantic_search(self, query: str, scope: str, k: int = 5) -> List[Dict[str, Any]]:
@@ -81,7 +92,7 @@ class VectorDatabase:
                     "scope": meta.get("scope"),
                     "chunk_source_type": meta.get("chunk_source_type")
                 })
-
+            print(chunks)
             return chunks
 
         except Exception as e:
@@ -92,9 +103,11 @@ class VectorDatabase:
         try:
             collection = self.get_collection_by_scope(scope)
             all_docs = collection.get()
-
+            print("len of db:",len(all_docs["documents"]))
             hits = []
             for doc, meta in zip(all_docs["documents"], all_docs["metadatas"]):
+                print(doc)
+                print(meta)
                 if query.lower() in doc.lower():
                     hits.append({
                         "text": doc,

@@ -4,10 +4,13 @@ from search_module.utilities.db_helper import *
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 
-import json
+import json,os,base64
 
 app = FastAPI()
 db = VectorDatabase()
+CACHE_DIR = "./cache"
+os.makedirs(CACHE_DIR, exist_ok=True)
+
 
 @app.post("/")
 async def aggregate_function(file: UploadFile = File(...)):
@@ -29,17 +32,69 @@ async def aggregate_function(file: UploadFile = File(...)):
 
         if "add" in json_data:
             if json_data["add"] == "youtube":
-                chunks, title = process_youtube({"url": json_data["data"], "scope":json_data['scope']})
+                chunks, title = process_youtube(json_data["data"],json_data['scope'])
+                if not chunks:
+                    return JSONResponse(content={
+                        "status": "error",
+                        "message": "Không thể xử lý Youtube URL"
+                    }, status_code=500)
+
+
                 for chunk in chunks:
                     db.add_chunk(chunk)
-                return JSONResponse(content={"status": "success", "message": "Youtube transcript added successfully"})
+                if len(chunks) < 2:
+                    return JSONResponse(content={
+                        "status": "warning",
+                        "message": "Độ dài transcript quá ngắn, có thể không đầy đủ hoặc bị lỗi.",
+                        "first_chunk": chunks[0] if chunks else None
+                    }, status_code=200)
+
+                return JSONResponse(content={
+                    "status": "success",
+                    "message": "Youtube transcript added successfully",
+                    "first_chunk": chunks[0]
+                })
+
+
+                # for chunk in chunks:
+                #     db.add_chunk(chunk)
+                
+                
+                # return JSONResponse(content={"status": "success", "message": "Youtube transcript added successfully"})
                 #trả về add thành công
             elif json_data["add"] == "pdf":
-                chunks, title = process_pdf(pdf_data=json_data["data"],scope=json_data["scope"])
+                # 1. Giải mã base64
+                pdf_bytes = base64.b64decode(json_data["data"])
+
+                # 2. Xác định đường dẫn lưu file
+                filename = json_data.get("filename", "uploaded.pdf")
+                file_path = os.path.join(CACHE_DIR, filename)
+
+                # 3. Ghi nội dung ra file
+                with open(file_path, "wb") as f:
+                    f.write(pdf_bytes)
+
+                # 4. Gọi process_pdf với đường dẫn file
+                chunks, title = process_pdf(pdf_path=file_path, scope=json_data["scope"])
+                if not chunks:
+                    return JSONResponse(content={
+                        "status": "error",
+                        "message": "Không thể xử lý PDF"
+                    }, status_code=500)
+
+
                 for chunk in chunks:
                     db.add_chunk(chunk)
-                return JSONResponse(content={"status": "success", "message": "PDF added successfully"})
-                #trả về add thành công
+
+                if len(chunks) < 2:
+                    return JSONResponse(content={
+                        "status": "warning",
+                        "message": "Độ dài transcript quá ngắn, có thể không đầy đủ hoặc bị lỗi.",
+                        "first_chunk": chunks[0] if chunks else None
+                    }, status_code=200)
+
+                return JSONResponse(content={"status": "success", "message": f"PDF '{filename}' added successfully","first_chunk": chunks[0]})
+
             else:
                 #raise error : không hợp lệ
                 # trả về erro và json error 
@@ -49,9 +104,12 @@ async def aggregate_function(file: UploadFile = File(...)):
             if mod not in ["word", "semantic"]:
                 raise Exception()
             if mod == "word":
-                return db.word_search(json_data["data"], json_data["scope"])
+                print("word")
+                tmp = db.word_search(json_data["search"], json_data["scope"])
+                print(tmp)
+                return tmp
             else: 
-                return db.semantic_search(json_data["data"], json_data["scope"])
+                return db.semantic_search(json_data["search"], json_data["scope"])
         return JSONResponse(content=result)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Nội dung không phải là JSON hợp lệ")
