@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 import pytest
+from search_module.utilities.db_helper import VectorDatabase
 from search_module.utilities.youtube import process_youtube
 from search_module.utilities.pdf import process_pdf
 import os
@@ -50,11 +51,10 @@ def test_process_youtube_returns_chunks():
     assert chunks is not None, "Chunks should not be None"
     assert isinstance(chunks, list), "Chunks should be a list"
     assert len(chunks) > 0, "Chunks list should not be empty"
-    assert "id" in chunks[0], "Each chunk should have an 'id'"
-    assert "scope" in chunks[0], "Each chunk should have 'scope'"
-    assert "type" in chunks[0], "Each chunk should have 'type'"
-    assert "title" in chunks[0], "Each chunk should have 'title'"
-    assert "original_data" in chunks[0], "Each chunk should have 'original_data'"
+    assert "chunk_source" in chunks[0], "Each chunk should have 'chunk_source'"
+    assert "chunk_scope" in chunks[0], "Each chunk should have 'chunk_scope'"
+    assert "chunk_source_type" in chunks[0], "Each chunk should have 'chunk_source_type'"
+    assert "chunk_id" in chunks[0], "Each chunk should have an 'chunk_id'"
     assert isinstance(title, str), "Title should be a string"
 
 def test_process_pdf_returns_chunks():
@@ -66,14 +66,54 @@ def test_process_pdf_returns_chunks():
     assert chunks is not None, "Chunks should not be None"
     assert isinstance(chunks, list), "Chunks should be a list"
     assert len(chunks) > 0, "Chunks list should not be empty"
-    assert "chunk_id" in chunks[0], "Each chunk should have 'chunk_id'"
-    assert "chunk_scope" in chunks[0], "Each chunk should have 'chunk_scope'"
     assert "chunk_source" in chunks[0], "Each chunk should have 'chunk_source'"
+    assert "chunk_scope" in chunks[0], "Each chunk should have 'chunk_scope'"
     assert "chunk_source_type" in chunks[0], "Each chunk should have 'chunk_source_type'"
+    assert "chunk_id" in chunks[0], "Each chunk should have 'chunk_id'"
     assert isinstance(base_name, str), "Base name should be a string"
 
 
-def test_search_word(example_search):
-    # Nếu muốn mock search_word sau này, bạn có thể thêm @patch tương tự
-    response = client.post("/", files=create_upload_file(example_search))
-    assert response.status_code == 200 or response.status_code == 500  # Tùy thuộc bạn đã cài search hay chưa
+
+@pytest.fixture
+def youtube_chunks_sample():
+    return [
+        {
+            "location": "01:16:25",
+            "text": "it was also very inefficient. For example, encode loops over the merges. You should only loops over the merges that matter...",
+            "chunk_source": "https://www.youtube.com/watch?v=Rvppog1HZJY&t=3s",
+            "scope": "IT3190E",
+            "chunk_source_type": "youtube",
+            "chunk_id": 49
+        },
+        {
+            "location": "01:18:00",
+            "text": "see you next time.",
+            "chunk_source": "https://www.youtube.com/watch?v=Rvppog1HZJY&t=3s",
+            "scope": "IT3190E",
+            "chunk_source_type": "youtube",
+            "chunk_id": 50
+        }
+    ]
+
+
+def test_add_youtube_chunks_and_search(youtube_chunks_sample):
+    db = VectorDatabase()
+
+    # Step 1: Add chunks
+    for chunk in youtube_chunks_sample:
+        res = db.add_chunk(chunk)
+        assert res["status"] == "success", f"Failed to add chunk: {res.get('message')}"
+
+    # Step 2: Semantic search
+    semantic_results = db.semantic_search("tokenizer", scope="IT3190E")
+    assert isinstance(semantic_results, list), "Semantic search should return a list"
+    assert len(semantic_results) > 0, "Semantic search should return results"
+    assert "text" in semantic_results[0], "Each result must contain 'text'"
+    print("\n🔍 Semantic Search:\n", semantic_results)
+
+    # Step 3: Word search
+    word_results = db.word_search("see you", scope="IT3190E")
+    assert isinstance(word_results, list), "Word search should return a list"
+    assert len(word_results) > 0, "Word search should return results"
+    assert "text" in word_results[0], "Each result must contain 'text'"
+    print("\n🔍 Word Search:\n", word_results)

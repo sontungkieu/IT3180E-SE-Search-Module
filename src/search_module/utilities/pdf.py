@@ -65,7 +65,7 @@ def process_pdf(pdf_path, scope):
         "extracted_text": all_text,
         "chunks": chunks,
     }
-    print(chunks)
+    # print(chunks)
     base_name = os.path.splitext(os.path.basename(pdf_path))[0]
     return chunks, base_name
 

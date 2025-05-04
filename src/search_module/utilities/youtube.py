@@ -103,10 +103,10 @@ def process_youtube(url = "http://youtube.com/watch?v=9vM4p9NN0Ts", scope= "IT31
         chunks = chunk_text(transcript_data)
         for c_id in range(len(chunks)):
             chunks[c_id]["chunk_source"] = url
-            chunks[c_id]["scope"] = scope
+            chunks[c_id]["chunk_scope"] = scope
             chunks[c_id]["chunk_source_type"] = "youtube"
             chunks[c_id]["chunk_id"] = c_id + 1
-        print(chunks)
+        # print(chunks)
         return chunks, title
     else:
         return None, "youtube_transcript"

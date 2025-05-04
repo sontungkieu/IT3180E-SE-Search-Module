@@ -3,6 +3,8 @@ import chromadb
 from typing import Dict, Any, List
 
 from sentence_transformers import SentenceTransformer
+from chromadb import PersistentClient
+
 
 
 class LocalEmbeddingFunction:
@@ -10,16 +12,20 @@ class LocalEmbeddingFunction:
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         self.model = SentenceTransformer(model_name)
 
-    def __call__(self, texts: List[str]) -> List[List[float]]:
-        return self.model.encode(texts).tolist()
+    def __call__(self, input: List[str]) -> List[List[float]]:
+        return self.model.encode(input).tolist()
 
 
 class VectorDatabase:
     """Vector DB cho dữ liệu chunk hóa, dùng Chroma + offline embedding."""
 
     def __init__(self, storage_path: str = "./vector_storage"):
-        self.client = chromadb.PersistentClient(path=storage_path)
+        self.client = PersistentClient(path=storage_path)
         self.embedding_fn = LocalEmbeddingFunction()
+        self.collection = self.client.get_or_create_collection(
+            name="media_vectors",
+            embedding_function=self.embedding_fn
+        )
 
     def get_collection_by_scope(self, scope: str):
         """Tạo hoặc lấy collection theo scope."""
