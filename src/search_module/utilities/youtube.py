@@ -64,7 +64,7 @@ def chunk_text(data, chunk_size=250):
         for word in words:
             if current_chunk_word_count == chunk_size:
                 chunks.append({
-                    "timestamp": time_output(current_start_time),
+                    "location": time_output(current_start_time),
                     "text": " ".join(current_chunk)
                 })
                 current_chunk = []
@@ -102,11 +102,10 @@ def process_youtube(url = "http://youtube.com/watch?v=9vM4p9NN0Ts", scope= "IT31
         transcript = " ".join([x[1] for x in transcript_data])
         chunks = chunk_text(transcript_data)
         for c_id in range(len(chunks)):
+            chunks[c_id]["chunk_source"] = url
             chunks[c_id]["scope"] = scope
-            chunks[c_id]["type"] = "youtube"
-            chunks[c_id]["title"] = title
-            chunks[c_id]["id"] = c_id + 1
-            chunks[c_id]["original_data"] = url
+            chunks[c_id]["chunk_source_type"] = "youtube"
+            chunks[c_id]["chunk_id"] = c_id + 1
         print(chunks)
         return chunks, title
     else:

@@ -35,7 +35,7 @@ def chunk_text_by_page(pages_text, chunk_size=250):
         if current_chunk:
             chunks.append({
                 "text": " ".join(current_chunk),
-                "page": page_num
+                "location": page_num
             })
 
     return chunks
@@ -52,10 +52,10 @@ def process_pdf(pdf_path, scope):
     all_text = "\n".join([text for _, text in pages_text])
     chunks = chunk_text_by_page(pages_text)
     for c_idx, chunk in enumerate(chunks):
-        chunks[c_idx]["chunk_id"] = c_idx + 1
         chunks[c_idx]["chunk_source"] = pdf_path
         chunks[c_idx]["chunk_scope"] = scope
         chunks[c_idx]["chunk_source_type"] = "pdf"
+        chunks[c_idx]["chunk_id"] = c_idx + 1
 
 
     document_data = {
