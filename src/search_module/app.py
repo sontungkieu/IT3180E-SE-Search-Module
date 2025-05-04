@@ -1,6 +1,6 @@
-from add_document.youtube_handler import process_youtube
-from add_document.pdf_handler import process_pdf
-
+from search_module.utilities.youtube import process_youtube
+from search_module.utilities.pdf import process_pdf
+from search_module.utilities.database import *
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -28,15 +28,23 @@ async def aggregate_function(file: UploadFile = File(...)):
 
         if "add" in json_data:
             if json_data["add"] == "youtube":
-                process_youtube(url = json_data["data"], scope=json_data['scope'])
+                chunks, title = process_youtube({"url": json_data["data"], "scope":json_data['scope']})
+                for chunk in chunks:
+                    # add_document(chunk)
+                    pass
+                return JSONResponse(content={"status": "success", "message": "Youtube transcript added successfully"})
                 #trả về add thành công
             elif json_data["add"] == "pdf":
-                process_pdf(pdf_data=json_data["data"],scope=json_data["scope"])
+                chunks, title = process_pdf(pdf_data=json_data["data"],scope=json_data["scope"])
+                for chunk in chunks:
+                    # add_document(chunk)
+                    pass
+                return JSONResponse(content={"status": "success", "message": "PDF added successfully"})
                 #trả về add thành công
             else:
                 #raise error : không hợp lệ
                 # trả về erro và json error 
-                pass
+                return JSONResponse(content={"status": "error", "message": "Invalid add type"}, status_code=400)
         elif "search" in json_data:
             mod = json_data.get("mod","word")
             if mod not in ["word", "semantic"]:

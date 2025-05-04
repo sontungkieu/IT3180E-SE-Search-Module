@@ -79,7 +79,7 @@ def chunk_text(data, chunk_size=250):
 
     if current_chunk:
         chunks.append({
-            "timestamp": time_output(current_start_time),
+            "location": time_output(current_start_time),
             "text": " ".join(current_chunk)
         })
 
@@ -95,22 +95,33 @@ def sanitize_filename(name):
     name = name.strip().replace(" ", "_")
     return re.sub(r'[\\/*?:"<>|]', "", name)
 
-def process_youtube(url, scope, lang="en"):
+def process_youtube(url = "http://youtube.com/watch?v=9vM4p9NN0Ts", scope= "IT3190E", lang="en"): # test hamf nayf
     transcript_data, title = get_youtube_transcript(url, lang)
 
     if transcript_data:
         transcript = " ".join([x[1] for x in transcript_data])
         chunks = chunk_text(transcript_data)
-        document_data = {
-            "type": "youtube",
-            "scope": scope,
-            "original_data": url,
-            "extracted_text": transcript,
-            "chunks": chunks,
-        }
-        return document_data, title
+        for c_id in range(len(chunks)):
+            chunks[c_id]["scope"] = scope
+            chunks[c_id]["type"] = "youtube"
+            chunks[c_id]["title"] = title
+            chunks[c_id]["id"] = c_id + 1
+            chunks[c_id]["original_data"] = url
+        print(chunks)
+        return chunks, title
     else:
         return None, "youtube_transcript"
+
+def quick_test_youtube():
+    url = "https://www.youtube.com/watch?v=Rvppog1HZJY&t=3s"
+    scope = "IT3190E"
+    lang = "en"
+
+    result, title = process_youtube(url, scope, lang)
+    if result:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print("Failed to extract transcript.")
 
 def main():
     url = input("Paste the YouTube URL: ").strip()
@@ -139,4 +150,4 @@ def main():
         print("Failed to extract transcript.")
 
 if __name__ == "__main__":
-    main()
+    quick_test_youtube()

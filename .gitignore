@@ -175,3 +175,5 @@ cython_debug/
 
 # Test files
 test_youtube_handler.py
+*.pdf
+/json_output/
