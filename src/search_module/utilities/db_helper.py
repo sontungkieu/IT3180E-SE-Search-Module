@@ -80,17 +80,26 @@ class VectorDatabase:
         """Tìm kiếm theo semantic vector embedding."""
         try:
             collection = self.get_collection_by_scope(scope)
-            results = collection.query(query_texts=[query], n_results=k)
+            results = collection.query(
+                query_texts=[query],
+                n_results=k,
+                include=["documents", "metadatas", "distances"]
+            )
 
             chunks = []
-            for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
+            for doc, meta, distance in zip(
+                results["documents"][0],
+                results["metadatas"][0],
+                results["distances"][0]
+            ):
                 chunks.append({
                     "text": doc,
                     "location": meta.get("location"),
                     "chunk_id": meta.get("chunk_id"),
                     "chunk_source": meta.get("chunk_source"),
                     "scope": meta.get("scope"),
-                    "chunk_source_type": meta.get("chunk_source_type")
+                    "chunk_source_type": meta.get("chunk_source_type"),
+                    "similarity_score": round(1 - distance, 4)  # Càng gần 1 thì càng giống
                 })
             print(chunks)
             return chunks
