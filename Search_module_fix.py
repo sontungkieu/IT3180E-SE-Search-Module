@@ -38,7 +38,8 @@ class SearchModule:
 
         try:
             # Load the embedding model once
-            self.embedder = SentenceTransformer('all-MiniLM-L6-v2')
+            self.embedder = SentenceTransformer('all-MiniLM-L6-v2',backend="onnx")
+            # self.embedder = LocalEmbeddingFunction(model_name='all-MiniLM-L6-v2')
             print("Sentence Transformer model loaded successfully.")
         except Exception as e:
             print(f"Error loading Sentence Transformer model: {e}")
