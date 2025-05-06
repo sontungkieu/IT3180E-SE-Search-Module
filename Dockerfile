@@ -34,10 +34,17 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Cài đặt Python dependencies
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple \
+ && pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+# RUN pip install --upgrade pip && pip install -r requirements.txt
+# RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
 
 # Sao chép toàn bộ source code
 COPY . .
+ENV PYTHONPATH=/app/src
+
 
 # Mở port FastAPI
 EXPOSE 8000
