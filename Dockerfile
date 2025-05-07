@@ -41,7 +41,7 @@ WORKDIR /app
 # RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN pip install --upgrade pip && \
-    pip install --no-deps -r requirements_nodeps.txt && \
+    # pip install --no-deps -r requirements_nodeps.txt && \
     pip install --no-cache-dir -r requirements.txt
 
 # Sao chép toàn bộ source code
