@@ -55,6 +55,26 @@ class VectorDatabase:
             embedding_function=self.embedding_fn
         )
 
+    def get_all_scopes(self) -> List[str]:
+        """
+        Trả về danh sách tất cả các scope hiện có (dựa trên
+        tên collection bắt đầu bằng 'scope_').
+        """
+        scopes: List[str] = []
+        try:
+            # Nếu client hỗ trợ list_collections()
+            collections = self.client.list_collections()
+            for col in collections:
+                # Với PersistentClient, mỗi col có attribute .name
+                name = getattr(col, "name", col.get("name", ""))
+                if name.startswith("scope_"):
+                    scopes.append(name[len("scope_"):])
+        except Exception:
+            # Fallback: không list được, trả về empty -> chỉ scope chính được dùng
+            pass
+        return scopes
+
+
     def get_collection_by_scope(self, scope: str):
         """Tạo hoặc lấy collection theo scope."""
         return self.client.get_or_create_collection(
@@ -101,63 +121,80 @@ class VectorDatabase:
             print("Error adding chunk:", e)
             return {"status": "error", "message": str(e)}
 
-    def semantic_search(self, query: str, scope: str, k: int = 5) -> List[Dict[str, Any]]:
-        """Tìm kiếm theo semantic vector embedding."""
-        try:
-            collection = self.get_collection_by_scope(scope)
-            results = collection.query(
-                query_texts=[query],
-                n_results=k,
-                include=["documents", "metadatas", "distances"]
-            )
+    def semantic_search(self, query: str, scope: str, k: int = 5) -> Dict[str, List[Dict[str, Any]]]:
+        """Tìm kiếm semantic vector embedding trên nhiều scope cùng lúc."""
+        results_by_scope = {}
 
-            chunks = []
-            for doc, meta, distance in zip(
-                results["documents"][0],
-                results["metadatas"][0],
-                results["distances"][0]
-            ):
-                chunks.append({
-                    "text": doc,
-                    "location": meta.get("location"),
-                    "chunk_id": meta.get("chunk_id"),
-                    "chunk_source": meta.get("chunk_source"),
-                    "chunk_scope": meta.get("chunk_scope"),
-                    "chunk_source_type": meta.get("chunk_source_type"),
-                    "similarity_score": round(1 - distance, 4)  # Càng gần 1 thì càng giống
-                })
-            print(chunks)
-            return chunks
+        # Lấy danh sách tất cả các scope (giả sử bạn có method này)
+        all_scopes = self.get_all_scopes()  # ví dụ trả về ['scope1', 'scope2', ...]
 
-        except Exception as e:
-            return [{"status": "error", "message": str(e)}]
+        # Đảm bảo scope hiện tại nằm đầu tiên (tùy chọn)
+        ordered_scopes = [scope] + [s for s in all_scopes if s != scope]
 
-    def word_search(self, query: str, scope: str, k: int = 5) -> List[Dict[str, Any]]:
-        """Tìm kiếm theo từ khóa (exact match)."""
-        try:
-            collection = self.get_collection_by_scope(scope)
-            all_docs = collection.get()
-            print("len of db:",len(all_docs["documents"]))
-            hits = []
-            for doc, meta in zip(all_docs["documents"], all_docs["metadatas"]):
-                print(doc)
-                print(meta)
-                if query.lower() in doc.lower():
-                    hits.append({
+        for sc in ordered_scopes:
+            try:
+                collection = self.get_collection_by_scope(sc)
+                res = collection.query(
+                    query_texts=[query],
+                    n_results=k,
+                    include=["documents", "metadatas", "distances"]
+                )
+                chunks = []
+                for doc, meta, distance in zip(
+                    res["documents"][0],
+                    res["metadatas"][0],
+                    res["distances"][0]
+                ):
+                    chunks.append({
                         "text": doc,
                         "location": meta.get("location"),
                         "chunk_id": meta.get("chunk_id"),
                         "chunk_source": meta.get("chunk_source"),
                         "chunk_scope": meta.get("chunk_scope"),
-                        "chunk_source_type": meta.get("chunk_source_type")
+                        "chunk_source_type": meta.get("chunk_source_type"),
+                        "similarity_score": round(1 - distance, 4)
                     })
-                    if len(hits) >= k:
-                        break
+                results_by_scope[sc] = chunks
 
-            return hits
+            except Exception as e:
+                # Nếu lỗi thì vẫn báo về scope đó
+                results_by_scope[sc] = [{"status": "error", "message": str(e)}]
 
-        except Exception as e:
-            return [{"status": "error", "message": str(e)}]
+        return results_by_scope
+
+
+    def word_search(self, query: str, scope: str, k: int = 5) -> Dict[str, List[Dict[str, Any]]]:
+        """Tìm kiếm theo từ khóa (exact match) trên nhiều scope cùng lúc."""
+        results_by_scope = {}
+        all_scopes = self.get_all_scopes()  # ví dụ ['scope1', 'scope2', ...]
+
+        # Ưu tiên scope hiện tại, rồi mới đến các scope khác
+        ordered_scopes = [scope] + [s for s in all_scopes if s != scope]
+
+        for sc in ordered_scopes:
+            try:
+                collection = self.get_collection_by_scope(sc)
+                all_docs = collection.get()
+                hits = []
+                for doc, meta in zip(all_docs["documents"], all_docs["metadatas"]):
+                    if query.lower() in doc.lower():
+                        hits.append({
+                            "text": doc,
+                            "location": meta.get("location"),
+                            "chunk_id": meta.get("chunk_id"),
+                            "chunk_source": meta.get("chunk_source"),
+                            "chunk_scope": meta.get("chunk_scope"),
+                            "chunk_source_type": meta.get("chunk_source_type")
+                        })
+                        if len(hits) >= k:
+                            break
+
+                results_by_scope[sc] = hits
+
+            except Exception as e:
+                results_by_scope[sc] = [{"status": "error", "message": str(e)}]
+
+        return results_by_scope
 
 
 # ✅ Test đơn giản
