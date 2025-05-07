@@ -14,3 +14,4 @@ fitz==0.0.1.dev2
 PyPDF2==3.0.1
 httpx>=0.21
 python-multipart==0.0.20
+vcrpy>=4.1.1
