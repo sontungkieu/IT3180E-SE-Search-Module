@@ -1,3 +1,3 @@
 # IT3180E-SE-Search-Module
 
-![Tests](https://github.com/sontungkieu/IT3180E-SE-Search-Module/blob/main/.github/workflows/tests.yml/badge.svg)
+![Tests](https://github.com/sontungkieu/IT3180E-SE-Search-Module/actions/workflows/tests.yml/badge.svg)
