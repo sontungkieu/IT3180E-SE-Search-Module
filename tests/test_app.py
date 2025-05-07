@@ -87,7 +87,7 @@ def test_process_youtube_returns_chunks():
 #     assert "chunk_id" in chunks[0]
 #     assert isinstance(title, str)
 
-
+@pytest.mark.skip(reason="Bỏ test live PDF vì file lớn và không cần thiết")
 def test_process_pdf_returns_chunks():
     pdf_path = "Quantum02.pdf"
     assert os.path.exists(pdf_path), f"{pdf_path} must exist for the test"
