@@ -88,20 +88,20 @@ def test_process_youtube_returns_chunks():
 #     assert isinstance(title, str)
 
 
-# def test_process_pdf_returns_chunks():
-#     pdf_path = "Quantum02.pdf"
-#     assert os.path.exists(pdf_path), f"{pdf_path} must exist for the test"
+def test_process_pdf_returns_chunks():
+    pdf_path = "Quantum02.pdf"
+    assert os.path.exists(pdf_path), f"{pdf_path} must exist for the test"
 
-#     chunks, base_name = process_pdf(pdf_path, scope="IT3190E")
+    chunks, base_name = process_pdf(pdf_path, scope="IT3190E")
 
-#     assert chunks is not None, "Chunks should not be None"
-#     assert isinstance(chunks, list), "Chunks should be a list"
-#     assert len(chunks) > 0, "Chunks list should not be empty"
-#     assert "chunk_source" in chunks[0], "Each chunk should have 'chunk_source'"
-#     assert "chunk_scope" in chunks[0], "Each chunk should have 'chunk_scope'"
-#     assert "chunk_source_type" in chunks[0], "Each chunk should have 'chunk_source_type'"
-#     assert "chunk_id" in chunks[0], "Each chunk should have 'chunk_id'"
-#     assert isinstance(base_name, str), "Base name should be a string"
+    assert chunks is not None, "Chunks should not be None"
+    assert isinstance(chunks, list), "Chunks should be a list"
+    assert len(chunks) > 0, "Chunks list should not be empty"
+    assert "chunk_source" in chunks[0], "Each chunk should have 'chunk_source'"
+    assert "chunk_scope" in chunks[0], "Each chunk should have 'chunk_scope'"
+    assert "chunk_source_type" in chunks[0], "Each chunk should have 'chunk_source_type'"
+    assert "chunk_id" in chunks[0], "Each chunk should have 'chunk_id'"
+    assert isinstance(base_name, str), "Base name should be a string"
 
 
 
