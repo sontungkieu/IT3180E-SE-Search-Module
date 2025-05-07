@@ -175,5 +175,7 @@ cython_debug/
 
 # Test files
 test_youtube_handler.py
-*.pdf
+# *.pdf
+/cache/
+/vector_storage/
 /json_output/
