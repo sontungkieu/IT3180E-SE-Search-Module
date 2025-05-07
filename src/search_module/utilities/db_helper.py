@@ -1,27 +1,47 @@
-import json
-import chromadb
-from typing import Dict, Any, List
-
-from sentence_transformers import SentenceTransformer
+import os,json
+import numpy as np
+import onnxruntime
+from transformers import AutoTokenizer
+from typing import List, Dict, Any
 from chromadb import PersistentClient
 
 
 
-# class LocalEmbeddingFunction:
-#     """Custom embedding function dùng mô hình local (offline)."""
-#     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
-#         self.model = SentenceTransformer(model_name)
-
-#     def __call__(self, input: List[str]) -> List[List[float]]:
-#         return self.model.encode(input).tolist()
+# Đường dẫn lưu trữ tokenizer và mô hình ONNX
+TOKENIZER_PATH = "./tokenizer"
+ONNX_MODEL_PATH = "./onnx_model/model.onnx"
 
 class LocalEmbeddingFunction:
     """Custom embedding function dùng mô hình local (offline) với ONNX."""
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
-        self.model = SentenceTransformer(model_name, backend="onnx")
+
+    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+        # Tải tokenizer từ thư mục nếu đã có
+        if not os.path.exists(TOKENIZER_PATH):
+            raise ValueError(f"Tokenizer không tìm thấy tại {TOKENIZER_PATH}")
+        
+        # Tải mô hình ONNX từ thư mục nếu đã có
+        if not os.path.exists(ONNX_MODEL_PATH):
+            raise ValueError(f"Mô hình ONNX không tìm thấy tại {ONNX_MODEL_PATH}")
+        
+        # Load mô hình ONNX và tokenizer
+        self.session = onnxruntime.InferenceSession(ONNX_MODEL_PATH)
+        self.tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_PATH)
 
     def __call__(self, input: List[str]) -> List[List[float]]:
-        return self.model.encode(input).tolist()
+        # Tạo input cho mô hình
+        inputs = self.tokenizer(input, padding=True, truncation=True, return_tensors="np")
+        
+        # Lấy các input hợp lệ từ mô hình ONNX
+        ort_inputs = {k: v for k, v in inputs.items() if k in [i.name for i in self.session.get_inputs()]}
+        
+        # Chạy inference và lấy kết quả
+        ort_outs = self.session.run(None, ort_inputs)
+        
+        # Tính toán embeddings bằng cách sử dụng mean pooling
+        embeddings = np.mean(ort_outs[0], axis=1)
+        
+        return embeddings.tolist()
+
 
 
 class VectorDatabase:
@@ -44,6 +64,11 @@ class VectorDatabase:
 
     def add_chunk(self, chunk: Dict[str, Any]) -> Dict[str, Any]:
         """Thêm 1 chunk vào collection tương ứng."""
+        print("chunk:", chunk)
+        if chunk.get("chunk_scope") is None:
+            print("errooorrr: chunk_scope is None.",chunk)
+            raise ValueError("chunk_scope is None.")
+            # return {"status": "error", "message": "chunk_scope is None."}
         try:
             scope = chunk["chunk_scope"]
             collection = self.get_collection_by_scope(scope)
@@ -59,7 +84,7 @@ class VectorDatabase:
             chunk_metadata = {
                 "location": chunk.get("location"),
                 "chunk_source": chunk.get("chunk_source"),
-                "scope": scope,
+                "chunk_scope": chunk.get("chunk_scope"),
                 "chunk_source_type": chunk.get("chunk_source_type"),
                 "chunk_id": chunk.get("chunk_id"),
             }
@@ -97,7 +122,7 @@ class VectorDatabase:
                     "location": meta.get("location"),
                     "chunk_id": meta.get("chunk_id"),
                     "chunk_source": meta.get("chunk_source"),
-                    "scope": meta.get("scope"),
+                    "chunk_scope": meta.get("chunk_scope"),
                     "chunk_source_type": meta.get("chunk_source_type"),
                     "similarity_score": round(1 - distance, 4)  # Càng gần 1 thì càng giống
                 })
@@ -123,7 +148,7 @@ class VectorDatabase:
                         "location": meta.get("location"),
                         "chunk_id": meta.get("chunk_id"),
                         "chunk_source": meta.get("chunk_source"),
-                        "scope": meta.get("scope"),
+                        "chunk_scope": meta.get("chunk_scope"),
                         "chunk_source_type": meta.get("chunk_source_type")
                     })
                     if len(hits) >= k:
@@ -143,7 +168,7 @@ if __name__ == "__main__":
         "location": "01:16:25",
         "text": "Tokenizer maps between strings and sequences of integers...",
         "chunk_source": "https://www.youtube.com/watch?v=Rvppog1HZJY&t=3s",
-        "scope": "IT3190E",
+        "chunk_scope": "IT3190E",
         "chunk_source_type": "youtube",
         "chunk_id": 49
     }
@@ -152,7 +177,7 @@ if __name__ == "__main__":
         "location": "01:18:00",
         "text": "See you next time.",
         "chunk_source": "https://www.youtube.com/watch?v=Rvppog1HZJY&t=3s",
-        "scope": "IT3190E",
+        "chunk_scope": "IT3190E",
         "chunk_source_type": "youtube",
         "chunk_id": 50
     }

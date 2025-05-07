@@ -56,15 +56,6 @@ def process_pdf(pdf_path, scope):
         chunks[c_idx]["chunk_scope"] = scope
         chunks[c_idx]["chunk_source_type"] = "pdf"
         chunks[c_idx]["chunk_id"] = c_idx + 1
-
-
-    document_data = {
-        "type": "pdf",
-        "scope": scope,
-        "original_data": pdf_path,
-        "extracted_text": all_text,
-        "chunks": chunks,
-    }
     # print(chunks)
     base_name = os.path.splitext(os.path.basename(pdf_path))[0]
     return chunks, base_name

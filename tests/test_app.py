@@ -81,7 +81,7 @@ def youtube_chunks_sample():
             "location": "01:16:25",
             "text": "it was also very inefficient. For example, encode loops over the merges. You should only loops over the merges that matter...",
             "chunk_source": "https://www.youtube.com/watch?v=Rvppog1HZJY&t=3s",
-            "scope": "IT3190E",
+            "chunk_scope": "IT3190E",
             "chunk_source_type": "youtube",
             "chunk_id": 49
         },
@@ -89,7 +89,7 @@ def youtube_chunks_sample():
             "location": "01:18:00",
             "text": "see you next time.",
             "chunk_source": "https://www.youtube.com/watch?v=Rvppog1HZJY&t=3s",
-            "scope": "IT3190E",
+            "chunk_scope": "IT3190E",
             "chunk_source_type": "youtube",
             "chunk_id": 50
         }

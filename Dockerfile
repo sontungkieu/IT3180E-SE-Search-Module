@@ -22,10 +22,10 @@
 FROM python:3.10-slim
 
 # Cập nhật & cài các gói cần thiết cho xử lý PDF, Youtube
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y \
+#     ffmpeg \
+#     poppler-utils \
+#     && rm -rf /var/lib/apt/lists/*
 
 # Tạo thư mục làm việc
 WORKDIR /app

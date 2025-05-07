@@ -41,6 +41,8 @@ async def aggregate_function(file: UploadFile = File(...)):
 
 
                 for chunk in chunks:
+                    if chunk["chunk_scope"] is None:
+                        raise HTTPException(status_code=400, detail="Chunk scope không hợp lệ")
                     db.add_chunk(chunk)
                 if len(chunks) < 2:
                     return JSONResponse(content={
