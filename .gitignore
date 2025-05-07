@@ -172,3 +172,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Test files
+test_youtube_handler.py
+# *.pdf
+/cache/
+/vector_storage/
+/json_output/
