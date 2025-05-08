@@ -22,4 +22,4 @@ jobs:
     - name: pushing image to docker hub
       run: |
         docker login -u codemaivanngu -p ${{secrets.DOCKER_HUB_TOKEN}}
-        docker push search-api:latest
+        docker push codemaivanngu/search-api:latest
