@@ -7,6 +7,7 @@ if __name__ == "__main__":
 # uvicorn src.search_module.app:app --port 8000
 
 # streamlit run frontend.py
+# docker stop search-backend
 # https://labs.play-with-docker.com/
 # docker build -t search-api .
 # docker rm search-backend

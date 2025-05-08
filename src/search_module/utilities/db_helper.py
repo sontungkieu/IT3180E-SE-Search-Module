@@ -56,22 +56,20 @@ class VectorDatabase:
         )
 
     def get_all_scopes(self) -> List[str]:
-        """
-        Trả về danh sách tất cả các scope hiện có (dựa trên
-        tên collection bắt đầu bằng 'scope_').
-        """
         scopes: List[str] = []
         try:
-            # Nếu client hỗ trợ list_collections()
-            collections = self.client.list_collections()
-            for col in collections:
-                # Với PersistentClient, mỗi col có attribute .name
-                name = getattr(col, "name", col.get("name", ""))
-                if name.startswith("scope_"):
-                    scopes.append(name[len("scope_"):])
-        except Exception:
-            # Fallback: không list được, trả về empty -> chỉ scope chính được dùng
-            pass
+            names = self.client.list_collections()  # → Sequence[str] ở chroma≥0.6.0
+            for col in names:
+                # Nếu col là string thì dùng trực tiếp, 
+                # nếu là object thì lấy col.name
+                if isinstance(col, str):
+                    collection_name = col
+                else:
+                    collection_name = getattr(col, "name", None)
+                if collection_name and collection_name.startswith("scope_"):
+                    scopes.append(collection_name[len("scope_"):])
+        except Exception as e:
+            print(f"Error listing collections: {e}")
         return scopes
 
 
@@ -90,7 +88,8 @@ class VectorDatabase:
             raise ValueError("chunk_scope is None.")
             # return {"status": "error", "message": "chunk_scope is None."}
         try:
-            scope = chunk["chunk_scope"]
+            scope = f"scope_{chunk["chunk_scope"]}"
+            # scope = chunk.get("chunk_scope")
             collection = self.get_collection_by_scope(scope)
             print("collection name:", collection.name)
             print("chunk:", chunk)
@@ -129,6 +128,7 @@ class VectorDatabase:
         all_scopes = self.get_all_scopes()  # ví dụ trả về ['scope1', 'scope2', ...]
 
         # Đảm bảo scope hiện tại nằm đầu tiên (tùy chọn)
+        scope = f"scope_{scope}"
         ordered_scopes = [scope] + [s for s in all_scopes if s != scope]
 
         for sc in ordered_scopes:
