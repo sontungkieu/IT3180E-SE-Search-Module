@@ -13,6 +13,7 @@ if __name__ == "__main__":
 # docker ps
 # docker logs -f search-backend
 # docker save -o search-api.tar search-api:latest
+# scp ip172-18-0-10-d0e0qia91nsg00csrgb0@direct.labs.play-with-docker.com:IT3180E-SE-Search-Module/search-api.tar .
 
 # https://chatgpt.com/share/681b50a2-ea38-8009-89ec-25d9672a4b07
 
