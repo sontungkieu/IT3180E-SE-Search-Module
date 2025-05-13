@@ -88,7 +88,7 @@ class VectorDatabase:
             raise ValueError("chunk_scope is None.")
             # return {"status": "error", "message": "chunk_scope is None."}
         try:
-            scope = f"scope_{chunk["chunk_scope"]}"
+            scope = f"scope_{chunk['chunk_scope']}"
             # scope = chunk.get("chunk_scope")
             collection = self.get_collection_by_scope(scope)
             print("collection name:", collection.name)

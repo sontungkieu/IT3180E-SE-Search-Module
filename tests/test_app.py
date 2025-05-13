@@ -172,7 +172,7 @@ def test_semantic_search_multiple_scopes(db_with_chunks):
 
     # Kiểu trả về và có key cho scope chính
     assert isinstance(results, dict), "semantic_search phải trả về dict scope → list"
-    assert "IT3190E" in results, "Phải có key cho scope chính 'IT3190E'"
+    assert "scope_IT3190E" in results, "Phải có key cho scope chính 'IT3190E'"
 
     # Với mỗi scope, kiểm tra list và cấu trúc item
     required_fields = {
@@ -203,7 +203,7 @@ def test_word_search_multiple_scopes(db_with_chunks):
 
     # Kiểu trả về và có key cho scope chính
     assert isinstance(results, dict), "word_search phải trả về dict scope → list"
-    assert "IT3190E" in results, "Phải có key cho scope chính 'IT3190E'"
+    assert "scope_IT3190E" in results, "Phải có key cho scope chính 'IT3190E'"
 
     # Với mỗi scope, kiểm tra list và cấu trúc item
     required_fields = {
@@ -218,6 +218,7 @@ def test_word_search_multiple_scopes(db_with_chunks):
     for scope, items in results.items():
         assert isinstance(items, list), f"Giá trị của scope {scope} phải là list"
         # Ít nhất một kết quả
+        print(f"Scope {scope} có {len(items),items} kết quả")
         assert len(items) > 0, f"Scope {scope} nên có ít nhất 1 kết quả"
         for item in items:
             # Kiểm tra đủ trường
