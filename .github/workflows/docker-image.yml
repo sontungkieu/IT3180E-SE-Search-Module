@@ -1,0 +1,25 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build -t codemaivanngu/search-api:latest .
+
+      # run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: pushing image to docker hub
+      run: |
+        docker login -u codemaivanngu -p ${{secrets.DOCKER_HUB_TOKEN}}
+        docker push codemaivanngu/search-api:latest
