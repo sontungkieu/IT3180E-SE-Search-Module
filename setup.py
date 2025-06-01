@@ -19,5 +19,8 @@ if __name__ == "__main__":
 # https://chatgpt.com/share/681b50a2-ea38-8009-89ec-25d9672a4b07
 
 # docker load -i search-api.tar
+# (base) tung@tung-Legion-Y540-15IRH-PG0:~/IT3180E-SE-Search-Module$ docker run -d -p 8000:8000 --name search-api codemaivanngu/search-api
+# docker rm search-api
+
 
 
