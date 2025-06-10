@@ -26,6 +26,12 @@
 
 name: Docker Image CI
 
+# --- bổ sung block permissions ---
+permissions:
+  contents: read        # cho phép đọc mã nguồn
+  packages: write       # cho phép ghi lên GHCR
+
+
 on:
   push:
     branches: [ "main" ]
